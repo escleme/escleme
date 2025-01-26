@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fútbol Global</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        header {
+            background-color: #1e90ff;
+            color: white;
+            padding: 1rem;
+            text-align: center;
+        }
+        main {
+            padding: 2rem;
+        }
+        section {
+            margin-bottom: 2rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+        }
+        section h2 {
+            color: #1e90ff;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+        }
+        .team-list, .player-list {
+            list-style-type: none;
+            padding: 0;
+        }
+        .team-list li, .player-list li {
+            margin: 0.5rem 0;
+            padding: 0.5rem;
+            border-bottom: 1px solid #ddd;
+        }
+        footer {
+            background-color: #333;
+            color: white;
+            text-align: center;
+            padding: 1rem 0;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Fútbol Global</h1>
+        <p>Explora ligas, equipos y jugadores de todo el mundo</p>
+    </header>
+    <main>
+        <section id="leagues">
+            <h2>Ligas Destacadas</h2>
+            <div id="league-container">
+                <!-- Aquí se generarán dinámicamente las ligas con la API -->
+            </div>
+        </section>
+
+        <section id="teams">
+            <h2>Equipos</h2>
+            <ul class="team-list" id="team-container">
+                <!-- Aquí se generarán dinámicamente los equipos con la API -->
+            </ul>
+        </section>
+
+        <section id="players">
+            <h2>Jugadores</h2>
+            <ul class="player-list" id="player-container">
+                <!-- Aquí se generarán dinámicamente los jugadores con la API -->
+            </ul>
+        </section>
+    </main>
+    <footer>
+        <p>Fútbol Global &copy; 2025 - Todos los derechos reservados</p>
+    </footer>
+
+    <script>
+        const apiKey = 'd18bda4d051c90d6cc1376c132657475';
+        const apiHost = 'https://v3.football.api-sports.io';
+
+        async function fetchApiData(endpoint, queryParams = {}) {
+            const url = new URL(apiHost + endpoint);
+            Object.keys(queryParams).forEach(key => url.searchParams.append(key, queryParams[key]));
+
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'x-rapidapi-key': apiKey,
+                    'x-rapidapi-host': 'v3.football.api-sports.io'
+                }
+            });
+
+            return response.json();
+        }
+
+        async function loadContent() {
+            // Cargar ligas
+            const leaguesContainer = document.getElementById('league-container');
+            const leagueIds = [39, 135, 78, 140, 61]; // Ejemplo de ligas destacadas
+            for (const id of leagueIds) {
+                const leagueData = await fetchApiData('/leagues', { id });
+                const league = leagueData.response[0].league;
+
+                const leagueElement = document.createElement('div');
+                leagueElement.innerHTML = `
+                    <h3>${league.name}</h3>
+                    <img src="${league.logo}" alt="${league.name}" width="100">
+                `;
+                leaguesContainer.appendChild(leagueElement);
+            }
+
+            // Cargar equipos (de la primera liga como ejemplo)
+            const teamsContainer = document.getElementById('team-container');
+            const teamsData = await fetchApiData('/teams', { league: leagueIds[0], season: new Date().getFullYear() });
+            for (const team of teamsData.response) {
+                const teamInfo = team.team;
+
+                const teamItem = document.createElement('li');
+                teamItem.innerHTML = `
+                    <strong>${teamInfo.name}</strong><br>
+                    <img src="${teamInfo.logo}" alt="${teamInfo.name}" width="50">
+                `;
+                teamsContainer.appendChild(teamItem);
+            }
+
+            // Cargar jugadores (de un equipo como ejemplo)
+            const playersContainer = document.getElementById('player-container');
+            const playersData = await fetchApiData('/players', { team: teamsData.response[0].team.id, season: new Date().getFullYear() });
+            for (const player of playersData.response) {
+                const playerInfo = player.player;
+
+                const playerItem = document.createElement('li');
+                playerItem.textContent = `${playerInfo.name} - ${playerInfo.position}`;
+                playersContainer.appendChild(playerItem);
+            }
+        }
+
+        loadContent();
+    </script>
+</body>
+</html>
